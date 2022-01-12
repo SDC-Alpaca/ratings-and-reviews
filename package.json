@@ -19,6 +19,7 @@
   "homepage": "https://github.com/SDC-Alpaca/ratings-and-reviews#readme",
   "dependencies": {
     "express": "^4.17.2",
+    "moment": "^2.29.1",
     "node": "^17.3.0",
     "pg": "^8.7.1"
   }
