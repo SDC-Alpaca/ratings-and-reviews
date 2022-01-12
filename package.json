@@ -1,0 +1,25 @@
+{
+  "name": "ratings-and-reviews",
+  "version": "1.0.0",
+  "description": "Backend to a responsive e-commerce application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SDC-Alpaca/ratings-and-reviews.git"
+  },
+  "author": "Kye Lindholm",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SDC-Alpaca/ratings-and-reviews/issues"
+  },
+  "homepage": "https://github.com/SDC-Alpaca/ratings-and-reviews#readme",
+  "dependencies": {
+    "express": "^4.17.2",
+    "node": "^17.3.0",
+    "pg": "^8.7.1"
+  }
+}
