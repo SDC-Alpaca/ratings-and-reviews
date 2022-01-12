@@ -39,11 +39,37 @@ app.post("/reviews", (req, res) => {
   let product_id = Number(req.query.product_id);
   let rating = Number(req.query.rating);
 
+  let photos = JSON.parse(req.query.photos);
+  console.log(photos);
+
   client.query(
     `INSERT INTO reviews (product_id, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness) VALUES (${product_id}, ${rating}, ${formattedDate}, '${req.query.summary}', '${req.query.body}', ${req.query.recommend}, 'false', '${req.query.name}', '${req.query.email}', null, 0)`)
-    .then((x) => {
+    .then((id) => {
       console.log('review table populated');
       res.status(201).send();
+
+
+      if (photos && photos.length > 0) {
+        client.query('SELECT MAX(id) FROM reviews')
+          .then((max) => {
+            let newId = max.rows[0].max;
+
+            for (let i = 0; i < photos.length; i++) {
+              let photo = photos[i];
+
+              client.query(`INSERT INTO reviews_photos (review_id, url) VALUES (${newId}, '${photo}')`)
+                .then((x) => {
+                  console.log('reviews_photos populated')
+                })
+                .catch((err) => {
+                  throw err;
+                });
+            };
+          })
+          .catch(err => {
+            throw err;
+          });
+      }
     })
     .catch((err) => {
       throw err;
