@@ -28,20 +28,26 @@ app.get("/reviews/", (req, res) => {
 
   let returnObj = {
     "product": req.query.product_id,
-    "page": req.query.page,
-    "count": req.query.count,
+    "page": page,
+    "count": count,
     "results": [],
   }
 
   client
-    .query(`SELECT * FROM reviews WHERE product_id = ${req.query.product_id} limit ${count}`)
+    .query(`SELECT id, rating, summary, recommend, response, body, date, reviewer_name, reviewer_email, helpfulness FROM reviews WHERE product_id = ${req.query.product_id} limit ${count}`)
     .then((data) => {
-      returnObj["results"] = data.rows;
+      for (let review of data.rows) {
+        if (!review.reported) {
+          review["review_id"] = review["id"];
+          returnObj["results"].push(review);
+        }
+      }
+
       for (let review of returnObj["results"]) {
         review.photos = [];
       }
-      for (let review of returnObj["results"]) {
 
+      for (let review of returnObj["results"]) {
         client.query(`SELECT * FROM reviews_photos WHERE review_id = ${review.id}`)
           .then(data => {
             if (data.rows.length > 0) {
