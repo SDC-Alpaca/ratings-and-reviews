@@ -30,14 +30,31 @@ app.get("/reviews/", (req, res) => {
     "product": req.query.product_id,
     "page": req.query.page,
     "count": req.query.count,
-    "results": []
+    "results": [],
   }
 
   client
     .query(`SELECT * FROM reviews WHERE product_id = ${req.query.product_id} limit ${count}`)
     .then((data) => {
       returnObj["results"] = data.rows;
-      res.status(200).send(returnObj);
+      for (let review of returnObj["results"]) {
+        review.photos = [];
+      }
+      for (let review of returnObj["results"]) {
+
+        client.query(`SELECT * FROM reviews_photos WHERE review_id = ${review.id}`)
+          .then(data => {
+            if (data.rows.length > 0) {
+              for (let photo of data.rows) {
+                review.photos.push({"id": photo.id, "url": photo.url});
+              }
+
+              res.status(200).send(returnObj);
+            }
+          })
+          .catch(err => { throw err; });
+
+      }
     })
     .catch((err) => {
       throw err;
