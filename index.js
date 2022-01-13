@@ -23,8 +23,25 @@ const client = new Client({
 client.connect();
 
 app.get("/reviews/", (req, res) => {
-  console.log("/reviews/");
-  res.status(200).send("/reviews/");
+  let page = Number(req.query.page) || 1;
+  let count = Number(req.query.count) || 5;
+
+  let returnObj = {
+    "product": req.query.product_id,
+    "page": req.query.page,
+    "count": req.query.count,
+    "results": []
+  }
+
+  client
+    .query(`SELECT * FROM reviews WHERE product_id = ${req.query.product_id} limit ${count}`)
+    .then((data) => {
+      returnObj["results"] = data.rows;
+      res.status(200).send(returnObj);
+    })
+    .catch((err) => {
+      throw err;
+    });
 });
 
 app.get("/reviews/meta", (req, res) => {
@@ -64,9 +81,7 @@ app.post("/reviews", (req, res) => {
                   `INSERT INTO reviews_photos (review_id, url) VALUES (${newId}, '${photo}')`
                 )
                 .then((x) => {
-
                   if (characteristics !== null) {
-                    console.log("trying");
                     for (let key in characteristics) {
                       client
                         .query(
@@ -80,7 +95,6 @@ app.post("/reviews", (req, res) => {
                         });
                     }
                   }
-
                 })
                 .catch((err) => {
                   throw err;
