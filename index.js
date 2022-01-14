@@ -27,14 +27,16 @@ app.get("/reviews/", (req, res) => {
   let count = Number(req.query.count) || 5;
 
   let returnObj = {
-    "product": req.query.product_id,
-    "page": page,
-    "count": count,
-    "results": [],
-  }
+    product: req.query.product_id,
+    page: page,
+    count: count,
+    results: [],
+  };
 
   client
-    .query(`SELECT id, rating, summary, recommend, response, body, date, reviewer_name, reviewer_email, helpfulness FROM reviews WHERE product_id = ${req.query.product_id} limit ${count}`)
+    .query(
+      `SELECT id, rating, summary, recommend, response, body, date, reviewer_name, reviewer_email, helpfulness FROM reviews WHERE product_id = ${req.query.product_id} limit ${count}`
+    )
     .then((data) => {
       for (let review of data.rows) {
         if (!review.reported) {
@@ -48,18 +50,20 @@ app.get("/reviews/", (req, res) => {
       }
 
       for (let review of returnObj["results"]) {
-        client.query(`SELECT * FROM reviews_photos WHERE review_id = ${review.id}`)
-          .then(data => {
+        client
+          .query(`SELECT * FROM reviews_photos WHERE review_id = ${review.id}`)
+          .then((data) => {
             if (data.rows.length > 0) {
               for (let photo of data.rows) {
-                review.photos.push({"id": photo.id, "url": photo.url});
+                review.photos.push({ id: photo.id, url: photo.url });
               }
 
               res.status(200).send(returnObj);
             }
           })
-          .catch(err => { throw err; });
-
+          .catch((err) => {
+            throw err;
+          });
       }
     })
     .catch((err) => {
@@ -68,8 +72,61 @@ app.get("/reviews/", (req, res) => {
 });
 
 app.get("/reviews/meta", (req, res) => {
-  console.log("/reviews/meta");
-  res.status(200).send("/reviews/meta");
+  let product_id = req.query.product_id;
+
+  let responseObj = {
+    product_id: product_id,
+    ratings: {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    },
+    recommended: {
+      0: 0,
+      1: 0,
+    },
+    characteristics: {},
+  };
+
+  const ratingRecommend = client.query(
+    `SELECT rating, recommend FROM reviews WHERE product_id=${Number(
+      product_id
+    )}`
+  );
+  const characteristicNames = client.query(
+    `SELECT * FROM characteristics WHERE product_id=${Number(product_id)}`
+  );
+
+  Promise.all([ratingRecommend, characteristicNames]).then((data) => {
+    let meta = data[0].rows;
+
+    for (let entry of meta) {
+      responseObj["ratings"][entry["rating"]] += 1;
+
+      if (entry["recommend"]) {
+        responseObj["recommended"][1] += 1;
+      } else {
+        responseObj["recommended"][0] += 1;
+      }
+    }
+
+    let chars = data[1].rows;
+    let promiseChain = [];
+    for (let characteristic of chars) {
+      responseObj["characteristics"][characteristic.name] = { id: characteristic.id, value: ""};
+      promiseChain.push(client.query(`SELECT value FROM characteristic_reviews WHERE id = ${characteristic.id}`));
+    }
+
+    Promise.all(promiseChain).then(data => {
+      for (let char in responseObj["characteristics"]) {
+        responseObj["characteristics"][char]["value"] = data.shift().rows[0]["value"].toString();
+      }
+
+      res.status(200).send(responseObj);
+    });
+  });
 });
 
 app.post("/reviews", (req, res) => {
