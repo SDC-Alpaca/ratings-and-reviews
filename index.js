@@ -96,7 +96,7 @@ app.get("/reviews/meta", (req, res) => {
     )}`
   );
   const characteristicNames = client.query(
-    `SELECT * FROM characteristics WHERE product_id=${Number(product_id)}`
+    `SELECT id, product_id, name FROM characteristics WHERE product_id=${Number(product_id)}`
   );
 
   Promise.all([ratingRecommend, characteristicNames]).then((data) => {
@@ -113,19 +113,24 @@ app.get("/reviews/meta", (req, res) => {
     }
 
     let chars = data[1].rows;
-    let promiseChain = [];
+    let ids = [];
     for (let characteristic of chars) {
       responseObj["characteristics"][characteristic.name] = { id: characteristic.id, value: ""};
-      promiseChain.push(client.query(`SELECT value FROM characteristic_reviews WHERE id = ${characteristic.id}`));
+      ids.push(characteristic.id);
     }
 
-    Promise.all(promiseChain).then(data => {
-      for (let char in responseObj["characteristics"]) {
-        responseObj["characteristics"][char]["value"] = data.shift().rows[0]["value"].toString();
-      }
+    let idString = JSON.stringify(ids).replace('[', '(').replace(']', ')');
+    console.log(idString);
 
-      res.status(200).send(responseObj);
-    });
+    client.query(`SELECT value FROM characteristic_reviews WHERE id IN ${idString}`)
+      .then(data => {
+        for (let char in responseObj["characteristics"]) {
+          responseObj["characteristics"][char]["value"] = data.rows.shift()["value"].toString();
+        }
+
+        res.status(200).send(responseObj);
+      })
+      .catch(err => { throw err; });
   });
 });
 
