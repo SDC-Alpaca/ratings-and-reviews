@@ -55,8 +55,9 @@ app.get("/reviews/", (req, res) => {
       let idString = JSON.stringify(idArray).replace('[', '(').replace(']', ')');
 
 
-      client.query(`SELECT (id, review_id, url) FROM reviews_photos WHERE review_id IN ${idString}`)
+      client.query(`SELECT * FROM reviews_photos WHERE review_id IN ${idString}`)
         .then(data => {
+
           if (data.rows.length > 0) {
             for (let photoData of data.rows) {
               for (let review of returnObj.results) {
@@ -68,6 +69,7 @@ app.get("/reviews/", (req, res) => {
           }
 
           res.status(200).send(returnObj);
+
         })
         .catch(err => { throw err; });
     })
@@ -123,7 +125,6 @@ app.get("/reviews/meta", (req, res) => {
     }
 
     let idString = JSON.stringify(ids).replace('[', '(').replace(']', ')');
-    console.log(idString);
 
     client.query(`SELECT value FROM characteristic_reviews WHERE id IN ${idString}`)
       .then(data => {
