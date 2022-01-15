@@ -45,30 +45,33 @@ app.get("/reviews/", (req, res) => {
         }
       }
 
+      let idArray = [];
+
       for (let review of returnObj["results"]) {
         review.photos = [];
+        idArray.push(review.id);
       }
 
-      for (let review of returnObj["results"]) {
-        client
-          .query(`SELECT * FROM reviews_photos WHERE review_id = ${review.id}`)
-          .then((data) => {
-            if (data.rows.length > 0) {
-              for (let photo of data.rows) {
-                review.photos.push({ id: photo.id, url: photo.url });
+      let idString = JSON.stringify(idArray).replace('[', '(').replace(']', ')');
+
+
+      client.query(`SELECT (id, review_id, url) FROM reviews_photos WHERE review_id IN ${idString}`)
+        .then(data => {
+          if (data.rows.length > 0) {
+            for (let photoData of data.rows) {
+              for (let review of returnObj.results) {
+                if (review.id === photoData.review_id) {
+                  review.photos.push( {id: photoData.id, url: photoData.url} )
+                }
               }
-
-              res.status(200).send(returnObj);
             }
-          })
-          .catch((err) => {
-            throw err;
-          });
-      }
+          }
+
+          res.status(200).send(returnObj);
+        })
+        .catch(err => { throw err; });
     })
-    .catch((err) => {
-      throw err;
-    });
+    .catch(err => { throw err; });
 });
 
 app.get("/reviews/meta", (req, res) => {
