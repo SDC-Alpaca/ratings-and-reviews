@@ -5,19 +5,20 @@ const moment = require("moment");
 express = require("express");
 const app = express();
 const PORT = 3000;
+// const PASSWORD = require('../config.js').password;
 
 const pool = new Pool({
-  user: "kyelindholm",
-  host: "127.0.0.1",
+  user: "postgres",
+  host: "ec2-52-91-174-8.compute-1.amazonaws.com",
   database: "reviews",
-  password: null,
+  password: "password",
 });
 
 const client = new Client({
-  user: "kyelindholm",
-  host: "127.0.0.1",
+  user: "postgres",
+  host: "ec2-52-91-174-8.compute-1.amazonaws.com",
   database: "reviews",
-  password: null,
+  password: "password",
 });
 
 client.connect();
