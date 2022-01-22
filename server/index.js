@@ -42,7 +42,7 @@ app.get("/loaderio-f63b78408ca9b0baf3bed114eec14796.txt", (req, res) => {
 });
 
 app.get("/reviews/", (req, res) => {
-  if (Object.keys(cache).length >= 0) cache = {};
+  if (Object.keys(cache).length >= 100) cache = {};
 
   let page = Number(req.query.page) || 1;
   let count = Number(req.query.count) || 5;
@@ -56,8 +56,9 @@ app.get("/reviews/", (req, res) => {
 
   let reviewQuery = `SELECT id, rating, summary, recommend, response, body, date, reviewer_name, reviewer_email, helpfulness FROM reviews WHERE product_id = ${req.query.product_id} LIMIT ${count}`;
 
-  if (cache[reviewQuery]) {
-    res.status(200).send(cache[reviewQuery]);
+  if (cache['reviews/' + req.query.product_id]) {
+    returnObj.results = cache['reviews/' + req.query.product_id];
+    res.status(200).send(returnObj);
   } else {
     client
       .query(reviewQuery)
@@ -112,7 +113,7 @@ app.get("/reviews/", (req, res) => {
             }
 
             res.status(200).send(returnObj);
-            cache[reviewQuery] = returnObj;
+            cache['reviews/' + req.query.product_id] = returnObj.results;
           })
           .catch((err) => {
             throw err;
